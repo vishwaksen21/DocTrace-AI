@@ -13,39 +13,42 @@ license = { text = "MIT" }
 authors = [{ name = "DocTrace AI" }]
 
 dependencies = [
-    # Web framework
+    # ── Web framework ─────────────────────────────────────────────────────────
     "fastapi>=0.111.0",
     "uvicorn[standard]>=0.30.0",
-    "python-multipart>=0.0.9",   # multipart/form-data file uploads
+    "python-multipart>=0.0.9",       # multipart/form-data file uploads
 
-    # Relational database
+    # ── Relational database (SQLite via aiosqlite; swap URL for PostgreSQL) ───
     "sqlalchemy[asyncio]>=2.0.30",
     "alembic>=1.13.0",
-    "asyncpg>=0.29.0",           # PostgreSQL async driver
+    "aiosqlite>=0.20.0",             # Async SQLite driver for development
 
-    # NoSQL database
-    "motor>=3.4.0",              # Async MongoDB driver (wraps pymongo)
+    # ── NoSQL (LLM generation results) ───────────────────────────────────────
+    "motor>=3.4.0",                  # Async MongoDB driver
 
-    # PDF parsing
+    # ── PDF parsing ───────────────────────────────────────────────────────────
+    # PyMuPDF: primary parser (fast, preserves structure, font metadata)
+    # pdfplumber: secondary, used only where it adds value (table extraction)
+    "pymupdf>=1.24.0",
     "pdfplumber>=0.11.0",
 
-    # LLM (OpenAI-compatible client — works with OpenRouter, Groq, etc.)
+    # ── LLM (OpenAI-compatible client — OpenRouter, OpenAI, Groq, …) ─────────
     "openai>=1.35.0",
 
-    # Validation & configuration
+    # ── Validation & configuration ────────────────────────────────────────────
     "pydantic[email]>=2.7.0",
     "pydantic-settings>=2.3.0",
 
-    # Structured logging
+    # ── Structured logging ────────────────────────────────────────────────────
     "structlog>=24.2.0",
 
-    # HTTP client (used in LLM client and tests)
+    # ── HTTP client (LLM client + tests) ─────────────────────────────────────
     "httpx>=0.27.0",
 
-    # Retry logic for LLM calls
+    # ── Retry logic (LLM calls) ───────────────────────────────────────────────
     "tenacity>=8.3.0",
 
-    # Async file I/O (for PDF temp-file handling)
+    # ── Async file I/O (PDF temp-file handling) ───────────────────────────────
     "aiofiles>=23.2.0",
 ]
 
@@ -54,31 +57,28 @@ dev = [
     "pytest>=8.2.0",
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=5.0.0",
-    "anyio>=4.4.0",              # Async test backend for pytest-asyncio
+    "anyio>=4.4.0",
     "ruff>=0.5.0",
     "mypy>=1.10.0",
     "types-aiofiles>=23.2.0",
 ]
 
-# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 # Tool configuration
-# ──────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 
 [tool.hatch.build]
 include = ["app/**"]
-
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-# E = pycodestyle errors, F = pyflakes, I = isort, N = naming, W = warnings,
-# UP = pyupgrade, B = bugbear, S = bandit security, RUF = ruff-specific
 select = ["E", "F", "I", "N", "W", "UP", "B", "RUF"]
 ignore = [
     "B008",   # do not perform function calls in argument defaults (FastAPI Depends)
-    "S101",   # use of assert (used in tests)
+    "S101",   # use of assert (acceptable in tests)
     "RUF012", # mutable class attributes (SQLAlchemy Mapped types)
 ]
 
@@ -86,15 +86,15 @@ ignore = [
 known-first-party = ["app"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "S105", "S106"]  # Allow assert and hardcoded test secrets
+"tests/**/*.py" = ["S101", "S105", "S106"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "--tb=short --strict-markers"
 markers = [
-    "integration: marks tests that require a live database (deselect with -m 'not integration')",
-    "slow: marks tests that take more than 1s",
+    "integration: marks tests requiring a live database (deselect with -m 'not integration')",
+    "slow: marks tests taking more than 1 second",
 ]
 
 [tool.mypy]
@@ -106,7 +106,7 @@ exclude = ["alembic/"]
 
 [tool.coverage.run]
 source = ["app"]
-omit = ["app/infrastructure/logging.py", "alembic/*"]
+omit = ["alembic/*"]
 
 [tool.coverage.report]
 show_missing = true
