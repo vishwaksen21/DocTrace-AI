@@ -1,0 +1,55 @@
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+MANIFEST
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env/
+
+# ── Environment / secrets (NEVER commit these) ────────────────────────────────
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Testing & coverage ────────────────────────────────────────────────────────
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+
+# ── Type checking ─────────────────────────────────────────────────────────────
+.mypy_cache/
+
+# ── Linting ───────────────────────────────────────────────────────────────────
+.ruff_cache/
+
+# ── Alembic (keep env.py and versions/ tracked; ignore compiled artefacts) ───
+alembic/__pycache__/
+
+# ── Uploaded files (temp PDF storage) ────────────────────────────────────────
+uploads/
+tmp_uploads/
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+.docker/

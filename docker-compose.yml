@@ -1,0 +1,82 @@
+services:
+  # ── PostgreSQL 16 ────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: doctrace_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: doctrace
+      POSTGRES_PASSWORD: doctrace
+      POSTGRES_DB: doctrace_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U doctrace -d doctrace_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── MongoDB 7 ────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7-jammy
+    container_name: doctrace_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── FastAPI application ──────────────────────────────────────────────────────
+  #
+  # In development the source directory is mounted as a volume so that
+  # uvicorn --reload picks up file changes without rebuilding the image.
+  # In production, remove the volume mount and set ENVIRONMENT=production.
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: doctrace_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Database
+      DATABASE_URL: postgresql+asyncpg://doctrace:doctrace@postgres:5432/doctrace_db
+      # MongoDB
+      MONGODB_URL: mongodb://mongodb:27017
+      MONGODB_DATABASE_NAME: doctrace_ai
+      # Application
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      # LLM — override via .env or shell export
+      # OPENROUTER_API_KEY: sk-or-...
+      # LLM_MODEL: google/gemini-2.5-flash
+    env_file:
+      # Optional: mount a local .env file to inject secrets (e.g., OPENROUTER_API_KEY)
+      # Create one from .env.example: cp .env.example .env
+      - path: .env
+        required: false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    volumes:
+      # Hot-reload: mount source code into the container for development
+      - .:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
+    driver: local
+  mongo_data:
+    driver: local

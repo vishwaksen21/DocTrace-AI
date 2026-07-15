@@ -1,0 +1,1 @@
+"""DocTrace AI — Backend package."""
