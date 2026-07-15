@@ -133,7 +133,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    _register_middleware(application)
+    _register_middleware(application, settings)
     _register_exception_handlers(application)
     _register_routes(application)
 
@@ -143,13 +143,13 @@ def create_app() -> FastAPI:
 # ── Middleware ────────────────────────────────────────────────────────────────
 
 
-def _register_middleware(app: FastAPI) -> None:
+def _register_middleware(app: FastAPI, settings: Settings) -> None:
     """Register all middleware in LIFO order (last registered = outermost)."""
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
+        allow_origins=["*"] if settings.is_development else [],
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=[HEADER_REQUEST_ID],
@@ -237,12 +237,7 @@ def _register_routes(app: FastAPI) -> None:
     )
     async def health_check() -> dict[str, str]:
         """Return basic process liveness status."""
-        settings = get_settings()
-        return {
-            "status": "healthy",
-            "version": settings.app_version,
-            "environment": settings.environment,
-        }
+        return {"status": "healthy"}
 
     @app.get(
         "/health/ready",

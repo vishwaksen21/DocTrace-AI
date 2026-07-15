@@ -37,10 +37,11 @@ from __future__ import annotations
 import logging
 import sys
 from contextvars import ContextVar
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 import structlog
+from structlog.stdlib import BoundLogger
 from structlog.types import EventDict, Processor
 
 # ── Per-request correlation ID ────────────────────────────────────────────────
@@ -171,7 +172,7 @@ def _silence_noisy_loggers() -> None:
         logging.getLogger(name).setLevel(level)
 
 
-def get_logger(name: str) -> structlog.stdlib.BoundLogger:
+def get_logger(name: str) -> BoundLogger:
     """Return a named, bound structlog logger.
 
     Args:
@@ -187,4 +188,4 @@ def get_logger(name: str) -> structlog.stdlib.BoundLogger:
         logger.warning("LLM retry", attempt=2, error="timeout")
         logger.error("Parse failed", exc_info=True)
     """
-    return structlog.get_logger(name)
+    return cast(BoundLogger, structlog.get_logger(name))

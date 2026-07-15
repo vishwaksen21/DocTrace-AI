@@ -67,7 +67,7 @@ _session_factory: async_sessionmaker[AsyncSession] | None = None
 # ── Engine construction ───────────────────────────────────────────────────────
 
 
-def _build_engine(database_url: str, echo: bool) -> AsyncEngine:
+def _build_engine(database_url: str, echo: bool, settings: Settings | None = None) -> AsyncEngine:
     """Construct an async SQLAlchemy engine for the given URL.
 
     Applies dialect-specific configuration automatically so the rest of
@@ -76,6 +76,7 @@ def _build_engine(database_url: str, echo: bool) -> AsyncEngine:
     Args:
         database_url: Full SQLAlchemy async URL (e.g. ``sqlite+aiosqlite:///...``).
         echo: Whether to log all SQL statements (development only).
+        settings: Optional application settings for PostgreSQL pool tuning.
 
     Returns:
         A configured ``AsyncEngine`` instance.
@@ -95,8 +96,18 @@ def _build_engine(database_url: str, echo: bool) -> AsyncEngine:
             poolclass=StaticPool if is_memory else NullPool,
         )
 
-    # PostgreSQL or other dialects: use SQLAlchemy's default pool.
-    # Pool size can be tuned via connection URL parameters when needed.
+    # PostgreSQL or other dialects: use SQLAlchemy's default pool with settings.
+    if settings is not None and "postgresql" in database_url.lower():
+        return create_async_engine(
+            database_url,
+            echo=echo,
+            pool_size=settings.db_pool_size,
+            max_overflow=settings.db_max_overflow,
+            pool_timeout=settings.db_pool_timeout,
+            pool_recycle=settings.db_pool_recycle,
+            pool_pre_ping=settings.db_pool_pre_ping,
+        )
+
     return create_async_engine(database_url, echo=echo)
 
 
@@ -106,8 +117,9 @@ def _build_engine(database_url: str, echo: bool) -> AsyncEngine:
 async def init_db(settings: Settings) -> None:
     """Initialise the database engine and session factory.
 
-    Must be called exactly once during application startup, before any
-    route handlers attempt database access.
+    Must be called during application startup, before any
+    route handlers attempt database access.  Idempotent — calling
+    multiple times safely re-initialises the engine.
 
     For SQLite file databases, the parent directory is created automatically
     so the application can start from a clean checkout without manual setup.
@@ -118,12 +130,17 @@ async def init_db(settings: Settings) -> None:
     """
     global _engine, _session_factory
 
+    # Idempotent: dispose existing engine if re-initialising
+    if _engine is not None:
+        await _engine.dispose()
+        logger.warning("Re-initialising database engine")
+
     url = settings.database_url
 
     if settings.is_sqlite and ":memory:" not in url:
         _ensure_sqlite_dir(url)
 
-    _engine = _build_engine(url, settings.database_echo_sql)
+    _engine = _build_engine(url, settings.database_echo_sql, settings)
     _session_factory = async_sessionmaker(
         _engine,
         class_=AsyncSession,

@@ -4,6 +4,8 @@ This module defines:
     - ``LLMMessage``         A single message in the LLM conversation
     - ``LLMResponse``        The parsed response from the LLM
     - ``LLMClientProtocol``  Structural interface all LLM clients must satisfy
+    - LLM exception hierarchy (``LLMError``, ``LLMTimeoutError``,
+      ``LLMRateLimitError``, ``LLMValidationError``, ``LLMProviderError``)
 
 Provider-agnosticism
 --------------------
@@ -29,6 +31,71 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol, runtime_checkable
+
+# ── LLM Exception Hierarchy ─────────────────────────────────────────────────────
+#
+# All LLM-related exceptions inherit from ``LLMError`` so callers can catch
+# any LLM failure with a single ``except LLMError`` clause.  Specific subclasses
+# allow differentiated handling (retry on timeout/rate-limit, fail fast on validation).
+
+
+class LLMError(Exception):
+    """Base class for all LLM-related errors."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        provider: str | None = None,
+        model: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.provider = provider
+        self.model = model
+
+
+class LLMTimeoutError(LLMError):
+    """Request exceeded the configured timeout."""
+
+
+class LLMRateLimitError(LLMError):
+    """Provider returned 429 (rate limited); retries exhausted.
+
+    Attributes:
+        retry_after: Seconds to wait before retrying, if provided by the provider.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        provider: str | None = None,
+        model: str | None = None,
+        retry_after: float | None = None,
+    ) -> None:
+        super().__init__(message, provider=provider, model=model)
+        self.retry_after = retry_after
+
+
+class LLMValidationError(LLMError):
+    """Request parameters failed validation (e.g., invalid model, bad message format)."""
+
+
+class LLMProviderError(LLMError):
+    """Any other non-retryable provider error (5xx, auth failure, quota exceeded)."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        provider: str | None = None,
+        model: str | None = None,
+        status_code: int | None = None,
+        response_body: str | None = None,
+    ) -> None:
+        super().__init__(message, provider=provider, model=model)
+        self.status_code = status_code
+        self.response_body = response_body
 
 
 @dataclass(frozen=True, slots=True)

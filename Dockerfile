@@ -22,6 +22,9 @@ RUN apt-get update \
         libpoppler-cpp-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Create non-root user
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+
 # Copy dependency manifest first so Docker cache is invalidated only when
 # dependencies change — not on every source code change.
 COPY pyproject.toml .
@@ -30,11 +33,14 @@ COPY pyproject.toml .
 RUN pip install --no-cache-dir -e "."
 
 # Copy application source last (most frequently changing layer)
-COPY app/ ./app/
-COPY alembic/ ./alembic/ 2>/dev/null || true
-COPY alembic.ini . 2>/dev/null || true
+COPY --chown=appuser:appuser app/ ./app/
+COPY --chown=appuser:appuser alembic/ ./alembic/ 2>/dev/null || true
+COPY --chown=appuser:appuser alembic.ini . 2>/dev/null || true
 
 EXPOSE 8000
+
+# Switch to non-root user
+USER appuser
 
 # Default command: production-ready (no --reload, multiple workers)
 # Override in docker-compose.yml for development (--reload, 1 worker)
