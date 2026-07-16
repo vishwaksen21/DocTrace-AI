@@ -1,0 +1,18 @@
+apiVersion: v2
+name: doctrace-ai
+description: AI-powered document tracing and QA test-case generation backend
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - document
+  - pdf
+  - qa
+  - testing
+  - llm
+  - ai
+maintainers:
+  - name: DocTrace AI Team
+    email: team@doctrace.ai
+sources:
+  - https://github.com/vishwaksen21/DocTrace-AI

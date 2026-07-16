@@ -158,6 +158,18 @@ class Settings(BaseSettings):
         description="MongoDB database name for LLM generation results.",
     )
 
+    # ── Redis (optional — enables distributed rate limiting & token blacklist) ────
+    #
+    # If not set, rate limiting uses in-memory store (single-instance only)
+    redis_url: str = Field(
+        default="",
+        description=(
+            "Redis connection string.  "
+            "Enables distributed rate limiting and JWT token blacklist.  "
+            "If not set, in-memory fallback is used (single-instance only)."
+        ),
+    )
+
     # ── LLM (OpenAI-compatible — OpenRouter by default) ───────────────────────
 
     openrouter_api_key: str = Field(
@@ -206,12 +218,47 @@ class Settings(BaseSettings):
     default_page_size: int = Field(default=20, ge=1, le=100)
     max_page_size: int = Field(default=100, ge=1, le=1000)
 
+    # ── Authentication (JWT) ────────────────────────────────────────────────────
+    secret_key: str = Field(
+        default="",
+        description="Secret key for JWT signing.  Must be set in production (min 32 chars).",
+    )
+    jwt_algorithm: str = Field(default="HS256", description="JWT signing algorithm")
+    access_token_expire_minutes: int = Field(
+        default=30, ge=5, le=1440, description="Access token lifetime in minutes"
+    )
+    refresh_token_expire_days: int = Field(
+        default=7, ge=1, le=30, description="Refresh token lifetime in days"
+    )
+
     # ── Computed properties ───────────────────────────────────────────────────
 
     @property
     def max_upload_size_bytes(self) -> int:
         """Return the maximum upload size in bytes (derived from MB setting)."""
         return self.max_upload_size_mb * 1024 * 1024
+
+    # ── Observability (M13) ──────────────────────────────────────────────────
+
+    otel_enabled: bool = Field(
+        default=False, description="Enable OpenTelemetry tracing"
+    )
+    otel_service_name: str = Field(
+        default="doctrace-ai", description="Service name for telemetry"
+    )
+    otel_exporter_endpoint: str = Field(
+        default="http://localhost:4317",
+        description="OTLP gRPC endpoint (e.g., http://otel-collector:4317)",
+    )
+    otel_exporter_insecure: bool = Field(
+        default=True, description="Use insecure gRPC connection (no TLS)"
+    )
+    metrics_enabled: bool = Field(
+        default=True, description="Enable Prometheus /metrics endpoint"
+    )
+    metrics_path: str = Field(
+        default="/metrics", description="Path for Prometheus metrics endpoint"
+    )
 
     @property
     def is_development(self) -> bool:
@@ -277,6 +324,16 @@ class Settings(BaseSettings):
             raise ValueError(
                 f"default_page_size ({self.default_page_size}) "
                 f"must be ≤ max_page_size ({self.max_page_size})"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def warn_missing_secret_key(self) -> Settings:
+        """Warn if secret_key is not set in production."""
+        if self.is_production and not self.secret_key:
+            logging.warning(
+                "SECRET_KEY is not set in production! "
+                "JWT tokens will not be secure. Set a strong random secret (32+ chars)."
             )
         return self
 

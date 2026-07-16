@@ -50,6 +50,20 @@ dependencies = [
 
     # ── Async file I/O (PDF temp-file handling) ───────────────────────────────
     "aiofiles>=23.2.0",
+
+    # ── Observability (M13) ───────────────────────────────────────────────────
+    "prometheus-client>=0.20.0",     # Prometheus metrics
+    "opentelemetry-api>=1.27.0",     # OpenTelemetry API
+    "opentelemetry-sdk>=1.27.0",     # OpenTelemetry SDK
+    "opentelemetry-exporter-otlp>=1.27.0",  # OTLP exporter
+    "opentelemetry-instrumentation-fastapi>=0.49b0",  # FastAPI instrumentation
+    "opentelemetry-instrumentation-sqlalchemy>=0.49b0",  # SQLAlchemy instrumentation
+    "opentelemetry-instrumentation-httpx>=0.49b0",  # httpx instrumentation
+
+    # ── Authentication ────────────────────────────────────────────────────────
+    "python-jose[cryptography]>=3.3.0",  # JWT handling
+    "passlib[bcrypt]>=1.7.4",            # Password hashing
+    "redis>=5.0.0",                      # Redis for rate limiting + token blacklist
 ]
 
 [project.optional-dependencies]
