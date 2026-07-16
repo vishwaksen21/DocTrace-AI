@@ -25,17 +25,13 @@ RUN apt-get update \
 # Create non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 
-# Copy dependency manifest first so Docker cache is invalidated only when
-# dependencies change — not on every source code change.
-COPY pyproject.toml .
-
-# Install runtime dependencies (no dev extras in the image)
-RUN pip install --no-cache-dir -e "."
-
-# Copy application source last (most frequently changing layer)
+# Copy source code and dependency manifests
+COPY --chown=appuser:appuser pyproject.toml README.md alembic.ini ./
 COPY --chown=appuser:appuser app/ ./app/
 COPY --chown=appuser:appuser alembic/ ./alembic/
-COPY --chown=appuser:appuser alembic.ini .
+
+# Install runtime dependencies (no dev extras in the image)
+RUN pip install --no-cache-dir "."
 
 EXPOSE 8000
 
