@@ -1,4 +1,5 @@
 """Test parser package."""
+
 from .fixtures import (
     make_list_pdf,
     make_multiheading_pdf,

@@ -44,7 +44,7 @@ class TestBodyFontSize:
         """Body text covers most characters; heading is few characters."""
         blocks = [
             _block("A" * 200, font_size=10.0),  # lots of body text
-            _block("Title", font_size=18.0),     # short heading
+            _block("Title", font_size=18.0),  # short heading
         ]
         assert _body_font_size(blocks) == 10.0
 

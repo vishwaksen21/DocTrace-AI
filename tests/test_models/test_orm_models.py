@@ -162,9 +162,7 @@ class TestDocumentModel:
 
 
 class TestVersionModel:
-    def test_unique_constraint_prevents_duplicate_version_numbers(
-        self, session: Session
-    ) -> None:
+    def test_unique_constraint_prevents_duplicate_version_numbers(self, session: Session) -> None:
         doc = _doc()
         session.add(doc)
         session.flush()
@@ -178,9 +176,7 @@ class TestVersionModel:
         with pytest.raises(IntegrityError):
             session.flush()
 
-    def test_same_version_number_allowed_for_different_documents(
-        self, session: Session
-    ) -> None:
+    def test_same_version_number_allowed_for_different_documents(self, session: Session) -> None:
         d1, d2 = _doc("A"), _doc("B")
         session.add_all([d1, d2])
         session.flush()
@@ -323,9 +319,7 @@ class TestSelectionModel:
         with pytest.raises(IntegrityError):
             session.flush()
 
-    def test_cascade_delete_selection_removes_junction_rows(
-        self, session: Session
-    ) -> None:
+    def test_cascade_delete_selection_removes_junction_rows(self, session: Session) -> None:
         ver, n1, _ = self._setup(session)
 
         sel = SelectionModel(version_id=ver.id)
@@ -341,10 +335,7 @@ class TestSelectionModel:
 
         # Junction row must also be gone
         remaining = session.execute(
-            text(
-                "SELECT COUNT(*) FROM selection_nodes "
-                "WHERE selection_id = :sid"
-            ),
+            text("SELECT COUNT(*) FROM selection_nodes WHERE selection_id = :sid"),
             {"sid": str(sel.id)},
         ).scalar()
         assert remaining == 0

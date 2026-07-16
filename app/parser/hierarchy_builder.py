@@ -278,7 +278,7 @@ def _merge_stream(
 
     inserted_tables: set[int] = set()
 
-    for (block, heading_level, confidence) in heading_results:
+    for block, heading_level, confidence in heading_results:
         # Skip suppressed blocks (overlap with table)
         if id(block) in table_suppressed:
             continue

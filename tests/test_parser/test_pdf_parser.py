@@ -45,11 +45,13 @@ class TestParseSyncSimple:
 
     def test_invalid_bytes_raises_pdf_parsing_error(self) -> None:
         from app.domain.exceptions import PDFParsingError
+
         with pytest.raises(PDFParsingError):
             _parse_sync(b"not a pdf at all", "bad.pdf")
 
     def test_empty_bytes_raises_pdf_parsing_error(self) -> None:
         from app.domain.exceptions import PDFParsingError
+
         with pytest.raises(PDFParsingError):
             _parse_sync(b"", "empty.pdf")
 
@@ -128,5 +130,6 @@ class TestParsePdfAsync:
 
     async def test_async_raises_on_invalid_bytes(self) -> None:
         from app.domain.exceptions import PDFParsingError
+
         with pytest.raises(PDFParsingError):
             await parse_pdf(b"garbage", filename="bad.pdf")

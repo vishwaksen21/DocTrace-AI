@@ -134,9 +134,7 @@ class TestCheckMongoHealth:
 
     async def test_returns_false_on_connection_failure(self) -> None:
         mock_client = MagicMock()
-        mock_client.admin.command = AsyncMock(
-            side_effect=ServerSelectionTimeoutError("timeout")
-        )
+        mock_client.admin.command = AsyncMock(side_effect=ServerSelectionTimeoutError("timeout"))
         mongo_module._client = mock_client
 
         result = await check_mongo_health()

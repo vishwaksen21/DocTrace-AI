@@ -83,9 +83,7 @@ class Settings(BaseSettings):
         ),
     )
     debug: bool = Field(default=False)
-    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
-        default="INFO"
-    )
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(default="INFO")
 
     # ── Database (SQLAlchemy async URL) ───────────────────────────────────────
     #
@@ -138,8 +136,7 @@ class Settings(BaseSettings):
     db_pool_pre_ping: bool = Field(
         default=True,
         description=(
-            "Enable connection liveness check before checkout "
-            "(prevents stale connections)."
+            "Enable connection liveness check before checkout (prevents stale connections)."
         ),
     )
 
@@ -206,9 +203,7 @@ class Settings(BaseSettings):
     # ── Rate limiting ───────────────────────────────────────────────────────
 
     rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
-    rate_limit_requests: int = Field(
-        default=100, ge=1, le=10000, description="Requests per window"
-    )
+    rate_limit_requests: int = Field(default=100, ge=1, le=10000, description="Requests per window")
     rate_limit_window_seconds: int = Field(
         default=60, ge=1, le=3600, description="Rate limit window in seconds"
     )
@@ -240,12 +235,8 @@ class Settings(BaseSettings):
 
     # ── Observability (M13) ──────────────────────────────────────────────────
 
-    otel_enabled: bool = Field(
-        default=False, description="Enable OpenTelemetry tracing"
-    )
-    otel_service_name: str = Field(
-        default="doctrace-ai", description="Service name for telemetry"
-    )
+    otel_enabled: bool = Field(default=False, description="Enable OpenTelemetry tracing")
+    otel_service_name: str = Field(default="doctrace-ai", description="Service name for telemetry")
     otel_exporter_endpoint: str = Field(
         default="http://localhost:4317",
         description="OTLP gRPC endpoint (e.g., http://otel-collector:4317)",
@@ -253,9 +244,7 @@ class Settings(BaseSettings):
     otel_exporter_insecure: bool = Field(
         default=True, description="Use insecure gRPC connection (no TLS)"
     )
-    metrics_enabled: bool = Field(
-        default=True, description="Enable Prometheus /metrics endpoint"
-    )
+    metrics_enabled: bool = Field(default=True, description="Enable Prometheus /metrics endpoint")
     metrics_path: str = Field(
         default="/metrics", description="Path for Prometheus metrics endpoint"
     )

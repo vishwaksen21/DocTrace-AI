@@ -23,7 +23,5 @@ class ErrorResponse(BaseModel):
 
     error: str = Field(description="Machine-readable error category code")
     message: str = Field(description="Human-readable warning details")
-    details: dict[str, Any] = Field(
-        default_factory=dict, description="Diagnostic payload contexts"
-    )
+    details: dict[str, Any] = Field(default_factory=dict, description="Diagnostic payload contexts")
     request_id: str = Field(description="Correlation request tracing trace ID")

@@ -50,6 +50,7 @@ async def api_db_engine() -> AsyncGenerator[AsyncEngine, None]:
 
     # Set the module-level engine so get_session works
     from app.infrastructure import database
+
     database._engine = engine
     database._session_factory = async_sessionmaker(
         engine,
@@ -76,6 +77,7 @@ async def api_db_engine() -> AsyncGenerator[AsyncEngine, None]:
 async def api_session(api_db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
     """Provide a transactionally isolated AsyncSession for dependency override."""
     from app.infrastructure.database import _session_factory
+
     assert _session_factory is not None
 
     async with _session_factory() as session:
@@ -117,6 +119,7 @@ async def client(
     mock_mongo_db: Any,
 ) -> AsyncGenerator[AsyncClient, None]:
     """Provide an AsyncClient configured with test dependency overrides."""
+
     # Override get_db dependency to use the isolated test session
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield api_session
@@ -130,6 +133,7 @@ async def client(
 
     # Also patch init_db/close_db to prevent lifespan from re-initializing
     from unittest.mock import AsyncMock, patch
+
     patch1 = patch("app.api.deps.get_database", return_value=mock_mongo_db)
     patch2 = patch("app.repositories.generation.get_database", return_value=mock_mongo_db)
     patch3 = patch("app.infrastructure.database.init_db", AsyncMock())

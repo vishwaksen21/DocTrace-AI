@@ -179,6 +179,7 @@ class OpenRouterClient:
             openai_messages = [{"role": msg.role, "content": msg.content}]
 
             from typing import Any, cast
+
             api_messages = cast(Any, openai_messages)
 
             # Use short timeout for quick validation check

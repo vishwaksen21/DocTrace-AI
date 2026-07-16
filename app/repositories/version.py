@@ -148,15 +148,12 @@ class SqlAlchemyVersionRepository:
         """
         # Lock the parent document row to coordinate concurrent uploads (ignored in SQLite)
         lock_stmt = (
-            select(DocumentModel.id)
-            .where(DocumentModel.id == document_id)
-            .with_for_update()
+            select(DocumentModel.id).where(DocumentModel.id == document_id).with_for_update()
         )
         await self.session.execute(lock_stmt)
 
-        stmt = (
-            select(func.max(VersionModel.version_number))
-            .where(VersionModel.document_id == document_id)
+        stmt = select(func.max(VersionModel.version_number)).where(
+            VersionModel.document_id == document_id
         )
         res = await self.session.execute(stmt)
         val = res.scalar()
@@ -210,10 +207,6 @@ class SqlAlchemyVersionRepository:
 
     async def exists(self, version_id: UUID) -> bool:
         """Return ``True`` if a version with the given UUID exists."""
-        stmt = (
-            select(func.count())
-            .select_from(VersionModel)
-            .where(VersionModel.id == version_id)
-        )
+        stmt = select(func.count()).select_from(VersionModel).where(VersionModel.id == version_id)
         res = await self.session.execute(stmt)
         return (res.scalar() or 0) > 0

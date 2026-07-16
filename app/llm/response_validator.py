@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import json
-from uuid import UUID
-
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -27,7 +26,7 @@ class LLMQATestCase(BaseModel):
 
     @field_validator("preconditions", "steps", "node_refs", mode="before")
     @classmethod
-    def ensure_list(cls, v: Any) -> list[Any]:
+    def ensure_list(cls, v: Any) -> Any:
         """Coerce single string values into single-element lists if returned by LLM."""
         if v is None:
             return []

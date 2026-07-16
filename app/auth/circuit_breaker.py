@@ -19,8 +19,8 @@ T = TypeVar("T")
 class CircuitState(Enum):
     """Circuit breaker states."""
 
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Failing, rejecting calls
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing, rejecting calls
     HALF_OPEN = "half_open"  # Testing if service recovered
 
 
@@ -28,9 +28,9 @@ class CircuitState(Enum):
 class CircuitBreakerConfig:
     """Configuration for circuit breaker."""
 
-    failure_threshold: int = 5          # Failures before opening
-    success_threshold: int = 2          # Successes before closing from half-open
-    timeout_seconds: float = 30.0       # Time before half-open
+    failure_threshold: int = 5  # Failures before opening
+    success_threshold: int = 2  # Successes before closing from half-open
+    timeout_seconds: float = 30.0  # Time before half-open
     excluded_exceptions: tuple[type[BaseException], ...] = ()  # Don't count these
 
 

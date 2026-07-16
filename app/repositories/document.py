@@ -115,9 +115,7 @@ class SqlAlchemyDocumentRepository:
     async def exists(self, document_id: UUID) -> bool:
         """Return ``True`` if a document with the given UUID exists."""
         stmt = (
-            select(func.count())
-            .select_from(DocumentModel)
-            .where(DocumentModel.id == document_id)
+            select(func.count()).select_from(DocumentModel).where(DocumentModel.id == document_id)
         )
         res = await self.session.execute(stmt)
         return (res.scalar() or 0) > 0

@@ -55,11 +55,7 @@ class SelectionModel(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"SelectionModel(id={self.id!r}, "
-            f"version_id={self.version_id!r}, "
-            f"name={self.name!r})"
-        )
+        return f"SelectionModel(id={self.id!r}, version_id={self.version_id!r}, name={self.name!r})"
 
 
 class SelectionNodeModel(Base):
@@ -98,8 +94,4 @@ class SelectionNodeModel(Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"SelectionNodeModel("
-            f"selection_id={self.selection_id!r}, "
-            f"node_id={self.node_id!r})"
-        )
+        return f"SelectionNodeModel(selection_id={self.selection_id!r}, node_id={self.node_id!r})"

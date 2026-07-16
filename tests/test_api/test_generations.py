@@ -86,18 +86,23 @@ class TestGenerationAPI:
 
         # Prepare structured test case output matching expected response schema format
         import json
+
         node_id = str(sel.node_ids[0])
-        llm_json = json.dumps({
-            "test_cases": [{
-                "id": "tc-001",
-                "title": "Verify spec",
-                "objective": "Verify specification requirements",
-                "preconditions": [],
-                "steps": ["Step 1"],
-                "expected_result": "Match",
-                "node_refs": [node_id],
-            }]
-        })
+        llm_json = json.dumps(
+            {
+                "test_cases": [
+                    {
+                        "id": "tc-001",
+                        "title": "Verify spec",
+                        "objective": "Verify specification requirements",
+                        "preconditions": [],
+                        "steps": ["Step 1"],
+                        "expected_result": "Match",
+                        "node_refs": [node_id],
+                    }
+                ]
+            }
+        )
 
         response = LLMResponse(
             content=llm_json,
@@ -122,6 +127,7 @@ class TestGenerationAPI:
 
             # Mock MongoDB find_one for get generation endpoint call
             from bson import ObjectId
+
             mock_doc = {
                 "_id": ObjectId(generation_id),
                 "selection_id": str(sel.id),

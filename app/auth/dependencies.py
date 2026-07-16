@@ -127,6 +127,7 @@ async def rate_limit_dependency(
 
 def require_roles(*required_roles: str) -> Callable[[TokenData], TokenData]:
     """Dependency that requires specific roles."""
+
     async def role_checker(user: TokenData = Depends(get_current_user)) -> TokenData:
         if not any(role in user.roles for role in required_roles):
             raise HTTPException(
@@ -134,6 +135,7 @@ def require_roles(*required_roles: str) -> Callable[[TokenData], TokenData]:
                 detail="Insufficient permissions",
             )
         return user
+
     return role_checker  # type: ignore[return-value]
 
 
