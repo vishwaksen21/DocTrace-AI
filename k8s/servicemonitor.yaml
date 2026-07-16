@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: doctrace-api
+  namespace: doctrace-ai
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: doctrace-api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+  namespaceSelector:
+    matchNames:
+      - doctrace-ai

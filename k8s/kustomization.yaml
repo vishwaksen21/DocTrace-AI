@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: doctrace-ai
+
+resources:
+  - namespace.yaml
+  - rbac.yaml
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+  - service.yaml
+  - servicemonitor.yaml
+
+commonLabels:
+  app.kubernetes.io/name: doctrace-ai
+  app.kubernetes.io/version: "0.1.0"
+  app.kubernetes.io/managed-by: kustomize

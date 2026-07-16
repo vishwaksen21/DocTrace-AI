@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "doctrace-ai.fullname" . }}
+  labels:
+    {{- include "doctrace-ai.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount | default 2 }}
+  selector:
+    matchLabels:
+      {{- include "doctrace-ai.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "doctrace-ai.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "doctrace-ai.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: ENVIRONMENT
+              value: {{ .Values.environment | default "production" }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "doctrace-ai.fullname" . }}-secrets
+                  key: database-url
+            - name: MONGODB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "doctrace-ai.fullname" . }}-secrets
+                  key: mongodb-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "doctrace-ai.fullname" . }}-secrets
+                  key: redis-url
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "doctrace-ai.fullname" . }}-secrets
+                  key: secret-key
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "doctrace-ai.fullname" . }}-secrets
+                  key: openrouter-api-key
+            - name: JWT_ALGORITHM
+              value: "{{ .Values.jwtAlgorithm | default "HS256" }}"
+            - name: ACCESS_TOKEN_EXPIRE_MINUTES
+              value: "{{ .Values.accessTokenExpireMinutes | default 30 }}"
+            - name: REFRESH_TOKEN_EXPIRE_DAYS
+              value: "{{ .Values.refreshTokenExpireDays | default 7 }}"
+            - name: RATE_LIMIT_ENABLED
+              value: "{{ .Values.rateLimitEnabled | default true }}"
+            - name: RATE_LIMIT_REQUESTS
+              value: "{{ .Values.rateLimitRequests | default 100 }}"
+            - name: RATE_LIMIT_WINDOW_SECONDS
+              value: "{{ .Values.rateLimitWindowSeconds | default 60 }}"
+            - name: OTEL_ENABLED
+              value: "{{ .Values.otelEnabled | default true }}"
+            - name: OTEL_SERVICE_NAME
+              value: "{{ .Values.otelServiceName | default "doctrace-ai" }}"
+            - name: OTEL_EXPORTER_ENDPOINT
+              value: "{{ .Values.otelExporterEndpoint | default "http://otel-collector:4317" }}"
+            - name: OTEL_EXPORTER_INSECURE
+              value: "{{ .Values.otelExporterInsecure | default true }}"
+            - name: METRICS_ENABLED
+              value: "{{ .Values.metricsEnabled | default true }}"
+            - name: METRICS_PATH
+              value: "{{ .Values.metricsPath | default "/metrics" }}"
+            - name: LOG_LEVEL
+              value: "{{ .Values.logLevel | default "INFO" }}"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

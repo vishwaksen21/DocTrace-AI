@@ -2,7 +2,7 @@
 
 AI-powered document tracing and QA test-case generation backend.
 
-> Full documentation coming in M14 (Documentation module).
+> **M14 Documentation** — [Architecture Decision Records](adr/README.md) | [OpenAPI Spec](http://localhost:8000/openapi.json) | [Swagger UI](http://localhost:8000/docs)
 
 ## Quick Start
 
@@ -23,22 +23,33 @@ DocTrace AI follows **Clean Architecture** with strict layer separation:
 app/
 ├── api/              # FastAPI dependencies, routes (M11+)
 ├── core/             # Pure configuration, logging, constants (no framework deps)
+├── domain/           # Entities, enums, exceptions (pure Python)
 ├── infrastructure/   # Database (SQLAlchemy), MongoDB (Motor), logging shim
 ├── llm/              # LLM abstraction (Protocol + value types)
+├── parser/           # PDF parsing (PyMuPDF + pdfplumber)
 ├── repositories/
 │   └── interfaces/   # Repository Protocols (dependency inversion)
+├── services/         # Business logic, orchestration
+├── versioning/       # Diff/matching algorithms
+├── schemas/          # Pydantic request/response models
 ├── main.py           # App factory + lifespan
+└── config.py         # Compat shim → app.core.config
 ```
 
 ### Key Design Decisions
 
-| Concern | Approach |
-|---------|----------|
-| **Database** | SQLite (dev) → PostgreSQL (prod) via `DATABASE_URL` only; dialect auto-detection in `_build_engine` |
-| **LLM** | Provider-agnostic via `LLMClientProtocol`; switch via `OPENROUTER_BASE_URL` + `LLM_MODEL` |
-| **MongoDB** | Optional at startup; LLM endpoints return `503` until connected |
-| **DI** | FastAPI `Depends` with protocol interfaces; testable via `app.dependency_overrides` |
-| **Logging** | `structlog` — JSON in production, colorized console in development; per-request correlation IDs |
+See [Architecture Decision Records](adr/README.md) for detailed rationale.
+
+| Concern | Approach | ADR |
+|---------|----------|-----|
+| **Architecture** | Clean Architecture with strict layer separation | [0001](adr/0001-clean-architecture.md) |
+| **Database** | SQLite (dev) → PostgreSQL (prod) via `DATABASE_URL` | [0002](adr/0002-database-strategy.md) |
+| **LLM** | Provider-agnostic via `LLMClientProtocol` | [0003](adr/0003-llm-protocol.md) |
+| **DI** | FastAPI `Depends` with Protocol interfaces | [0004](adr/0004-di-fastapi-protocols.md) |
+| **PDF Parsing** | PyMuPDF + pdfplumber hybrid pipeline | [0007](adr/0007-pdf-parsing.md) |
+| **Version Diff** | Position-anchored matching with content hashing | [0008](adr/0008-version-diff.md) |
+| **Observability** | OpenTelemetry + Prometheus + Structured Logging | [0006](adr/0006-observability.md) |
+| **Logging** | `structlog` — JSON in prod, colorized console in dev; correlation IDs | — |
 
 ## Configuration
 
@@ -196,20 +207,20 @@ The Dockerfile runs as non-root user `appuser` (UID 1000).
 
 ## Roadmap
 
-| Module | Focus |
-|--------|-------|
-| M3 | Domain entities + SQLAlchemy models + Alembic migrations |
-| M4 | PDF upload, parsing (PyMuPDF), versioning |
-| M5 | Node extraction, heading hierarchy, content hashing |
-| M6 | Version diff engine (position-anchored matching) |
-| M7 | Range selection API |
-| M8 | Document service layer |
-| M9 | Selection service layer |
-| M10 | OpenRouter LLM client implementation |
-| M11 | Generation API + background tasks |
-| M12 | API hardening (validation, errors, rate limits) |
-| M13 | Observability (metrics, tracing) |
-| M14 | Documentation (OpenAPI, ADRs) |
+| Module | Focus | Status |
+|--------|-------|--------|
+| M3 | Domain entities + SQLAlchemy models + Alembic migrations | ✅ Done |
+| M4 | PDF upload, parsing (PyMuPDF), versioning | ✅ Done |
+| M5 | Node extraction, heading hierarchy, content hashing | ✅ Done |
+| M6 | Version diff engine (position-anchored matching) | ✅ Done |
+| M7 | Range selection API | ✅ Done |
+| M8 | Document service layer | ✅ Done |
+| M9 | Selection service layer | ✅ Done |
+| M10 | OpenRouter LLM client implementation | ✅ Done |
+| M11 | Generation API + background tasks | ✅ Done |
+| M12 | API hardening (validation, errors, rate limits) | ✅ Done |
+| M13 | Observability (metrics, tracing) | ✅ Done |
+| M14 | Documentation (OpenAPI, ADRs) | ✅ Done |
 
 ## License
 

@@ -1,0 +1,211 @@
+# Default values for DocTrace AI
+
+replicaCount: 3
+
+image:
+  repository: doctrace-ai
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health/ready
+    port: 8000
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - doctrace-api
+          topologyKey: kubernetes.io/hostname
+
+config:
+  appName: "DocTrace AI"
+  appVersion: "0.1.0"
+  environment: "production"
+  debug: false
+  logLevel: "INFO"
+  databaseEchoSql: false
+  dbPoolSize: 10
+  dbMaxOverflow: 20
+  dbPoolTimeout: 30.0
+  dbPoolRecycle: 3600
+  dbPoolPrePing: true
+  maxUploadSizeMb: 50
+  defaultPageSize: 20
+  maxPageSize: 100
+  openrouterBaseUrl: "https://openrouter.ai/api/v1"
+  llmModel: "google/gemini-2.5-flash"
+  llmTimeoutSeconds: 60.0
+  llmMaxRetries: 3
+  llmRetryMinWaitSeconds: 1.0
+  llmRetryMaxWaitSeconds: 30.0
+  jwtAlgorithm: "HS256"
+  accessTokenExpireMinutes: 30
+  refreshTokenExpireDays: 7
+  rateLimitEnabled: true
+  rateLimitRequests: 100
+  rateLimitWindowSeconds: 60
+  otelEnabled: true
+  otelServiceName: "doctrace-ai"
+  otelExporterEndpoint: "http://otel-collector:4317"
+  otelExporterInsecure: true
+  metricsEnabled: true
+  metricsPath: "/metrics"
+
+secrets:
+  secretKey: ""
+  openrouterApiKey: ""
+  postgresPassword: ""
+
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+  auth:
+    username: doctrace
+    password: ""
+    database: doctrace_db
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+mongodb:
+  enabled: true
+  image:
+    repository: mongo
+    tag: "7.0"
+  auth:
+    username: doctrace
+    password: ""
+    database: doctrace_ai
+  persistence:
+    enabled: true
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+redis:
+  enabled: true
+  image:
+    repository: redis
+    tag: "7-alpine"
+  auth:
+    enabled: false
+    password: ""
+  master:
+    persistence:
+      enabled: true
+      size: 1Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  path: /metrics
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: doctrace.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: doctrace-tls
+      hosts:
+        - doctrace.example.com
+
+nodeSelector: {}
+
+tolerations: []
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2

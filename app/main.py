@@ -8,14 +8,18 @@ this file.
 Startup sequence (lifespan):
     1. Configure structured logging (must be first)
     2. Initialise SQLite/PostgreSQL engine (``init_db``)
-    3. Initialise MongoDB client (``init_mongo``)
-    4. Create MongoDB indexes (``ensure_indexes``)
-    5. Log ready message
+    3. Initialise Redis client (``create_redis_client``)
+    4. Initialise MongoDB client (``init_mongo``)
+    5. Create MongoDB indexes (``ensure_indexes``)
+    6. Initialize rate limiter (``RateLimiter``)
+    7. Initialize observability (tracing, metrics)
+    8. Log ready message
 
 Shutdown sequence (lifespan):
-    1. Close MongoDB client (``close_mongo``)
-    2. Dispose database engine (``close_db``)
-    3. Log goodbye message
+    1. Close Redis client (``close_redis_client``)
+    2. Close MongoDB client (``close_mongo``)
+    3. Dispose database engine (``close_db``)
+    4. Log goodbye message
 
 Run locally (no Docker required)::
 
@@ -29,8 +33,6 @@ Run via Docker Compose::
 from __future__ import annotations
 
 import time
-from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -39,70 +41,26 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import Settings, get_settings
 from app.core.constants import HEADER_REQUEST_ID
-from app.core.logging import configure_logging, get_logger, set_request_id
-from app.infrastructure.database import check_db_health, close_db, init_db
+from app.core.logging import get_logger, set_request_id
+from app.core.observability import (
+    create_observability_lifespan,
+    metrics_endpoint,
+)
+from app.infrastructure.database import check_db_health
 from app.infrastructure.mongodb import (
     check_mongo_health,
-    close_mongo,
-    ensure_indexes,
-    init_mongo,
 )
 
 logger = get_logger(__name__)
 
+# ── Observability ───────────────────────────────────────────────────────────────
+
+# Metrics endpoint will be added after app creation
+
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Manage application startup and shutdown in a single coroutine.
-
-    Using ``asynccontextmanager`` (FastAPI lifespan) instead of the
-    deprecated ``@app.on_event`` handlers ensures startup/shutdown
-    are always a matched pair, even if startup raises an exception.
-    """
-    settings: Settings = get_settings()
-
-    # 1. Configure logging first — all subsequent log calls benefit from it
-    configure_logging(
-        log_level=settings.log_level,
-        is_development=settings.is_development,
-    )
-
-    logger.info(
-        "Starting DocTrace AI",
-        version=settings.app_version,
-        environment=settings.environment,
-        database=settings.database_url.split("///")[-1] if settings.is_sqlite else "external",
-        llm_model=settings.llm_model,
-    )
-
-    # 2. Initialise relational database
-    await init_db(settings)
-
-    # 3. Initialise MongoDB (non-fatal if unavailable)
-    try:
-        await init_mongo(settings)
-        await ensure_indexes()
-    except Exception as exc:
-        # MongoDB failure is non-fatal at startup — LLM endpoints will
-        # return 503 until connectivity is established.
-        logger.warning(
-            "MongoDB initialisation failed at startup — "
-            "LLM generation endpoints will be unavailable until resolved.",
-            error=str(exc),
-        )
-
-    logger.info("DocTrace AI is ready to serve requests")
-
-    yield  # ← application runs here
-
-    # Shutdown: reverse order of initialisation
-    await close_mongo()
-    await close_db()
-
-    logger.info("DocTrace AI shutdown complete")
+lifespan = create_observability_lifespan
 
 
 # ── Application factory ───────────────────────────────────────────────────────
@@ -130,90 +88,26 @@ def create_app() -> FastAPI:
         docs_url="/docs" if not settings.is_production else None,
         redoc_url="/redoc" if not settings.is_production else None,
         openapi_url="/openapi.json" if not settings.is_production else None,
-        lifespan=lifespan,
+        lifespan=create_observability_lifespan(settings),
     )
 
-    # Add rate limiting middleware
-    if settings.rate_limit_enabled:
-        application.add_middleware(
-            RateLimitMiddleware,  # type: ignore[arg-type]
-            requests=settings.rate_limit_requests,
-            window_seconds=settings.rate_limit_window_seconds,
-        )
+    # Rate limiting is now handled by the Redis-backed RateLimiter in the lifespan
+    # The old in-memory middleware is removed
 
     _register_middleware(application, settings)
     _register_exception_handlers(application)
     _register_routes(application)
 
+    # Add metrics endpoint
+    async def metrics_endpoint_wrapper(request: Request) -> Response:
+        return await metrics_endpoint()
+
+    application.add_route("/metrics", metrics_endpoint_wrapper, methods=["GET"])
+
     return application
 
 
 # ── Middleware ────────────────────────────────────────────────────────────────
-
-
-class RateLimitMiddleware:
-    """Simple in-memory rate limiting middleware.
-
-    Uses a sliding window algorithm with per-IP tracking.
-    For production, consider using Redis-backed rate limiting.
-    """
-
-    def __init__(
-        self,
-        app: FastAPI,
-        requests: int = 100,
-        window_seconds: int = 60,
-    ) -> None:
-        self.app = app
-        self.requests = requests
-        self.window_seconds = window_seconds
-        self._hits: dict[str, list[float]] = {}
-
-    async def __call__(
-        self, scope: dict[str, Any], receive: Any, send: Any
-    ) -> None:
-        if scope["type"] != "http":
-            await self.app(scope, receive, send)
-            return
-
-        # Get client IP
-        client = scope.get("client")
-        if client:
-            client_ip = client[0]
-        else:
-            client_ip = "unknown"
-
-        # Check rate limit
-        import time
-        now = time.time()
-        window_start = now - self.window_seconds
-
-        # Clean old hits
-        if client_ip in self._hits:
-            self._hits[client_ip] = [ts for ts in self._hits[client_ip] if ts > window_start]
-        else:
-            self._hits[client_ip] = []
-
-        # Check if limit exceeded
-        if len(self._hits[client_ip]) >= self.requests:
-            # Rate limited
-            response = JSONResponse(
-                status_code=429,
-                content={
-                    "error": "RateLimitExceeded",
-                    "message": (
-                        f"Rate limit exceeded. Maximum {self.requests} requests "
-                        f"per {self.window_seconds} seconds."
-                    ),
-                },
-            )
-            await response(scope, receive, send)
-            return
-
-        # Record hit
-        self._hits[client_ip].append(now)
-
-        await self.app(scope, receive, send)
 
 
 def _register_middleware(app: FastAPI, settings: Settings) -> None:
@@ -244,6 +138,17 @@ def _register_middleware(app: FastAPI, settings: Settings) -> None:
         response: Response = await call_next(request)
         duration_ms = round((time.monotonic() - start) * 1_000, 2)
 
+        # Record metrics
+        if settings.metrics_enabled:
+            from app.core.observability import record_http_request
+
+            record_http_request(
+                method=request.method,
+                path=request.url.path,
+                status=response.status_code,
+                duration=duration_ms / 1000.0,
+            )
+
         response.headers[HEADER_REQUEST_ID] = request_id
 
         logger.info(
@@ -266,8 +171,11 @@ def _register_exception_handlers(app: FastAPI) -> None:
     API consumers.  Domain-specific handlers are added in M11.
     """
     from app.api.errors import register_error_handlers
+    from app.core.logging import get_logger
 
     register_error_handlers(app)
+
+    exception_logger = get_logger(__name__)
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(
@@ -275,7 +183,7 @@ def _register_exception_handlers(app: FastAPI) -> None:
         exc: Exception,
     ) -> JSONResponse:
         """Return a structured 500 response for all unhandled exceptions."""
-        logger.error(
+        exception_logger.error(
             "Unhandled exception",
             path=request.url.path,
             method=request.method,

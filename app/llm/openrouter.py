@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 from openai import APIError, APITimeoutError, AsyncOpenAI, RateLimitError
 from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
+from app.auth.circuit_breaker import OPENROUTER_BREAKER
 from app.llm.base import (
     LLMError,
     LLMMessage,
@@ -71,14 +72,18 @@ class OpenRouterClient:
             reraise=True,
         )
 
-        try:
+        async def _call_with_breaker() -> LLMResponse:
             return await retryer(
+                OPENROUTER_BREAKER.call,
                 self._call_api,
                 openai_messages,
                 temperature,
                 max_tokens,
                 response_format,
             )
+
+        try:
+            return await _call_with_breaker()
         except RateLimitError as exc:
             retry_after = None
             response = getattr(exc, "response", None)
