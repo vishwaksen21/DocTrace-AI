@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "doctrace-ai"
 version = "0.1.0"
 description = "AI-powered document tracing and QA test-case generation backend"
-readme = "docs/README.md"
+readme = "README.md"
 
 requires-python = ">=3.11"
 license = { text = "MIT" }
