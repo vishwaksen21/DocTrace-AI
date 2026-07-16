@@ -16,7 +16,7 @@ from collections.abc import Generator
 
 import pytest
 
-from app.config import get_settings
+from app.core.config import get_settings
 
 
 @pytest.fixture(autouse=True)
@@ -40,3 +40,21 @@ def anyio_backend() -> str:
     alongside ``anyio``.
     """
     return "asyncio"
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Register global warning filters.
+
+    Suppress the SQLAlchemy SAWarning that fires when an IntegrityError
+    leaves a transaction deassociated from its connection on SQLite.  This
+    is a known SQLite DDL auto-commit behaviour and does not affect the
+    test outcome.  Silencing it keeps the output clean without masking
+    real warnings.
+    """
+    import warnings
+
+    warnings.filterwarnings(
+        "ignore",
+        message="transaction already deassociated from connection",
+        category=UserWarning,  # SAWarning is a UserWarning subclass
+    )
