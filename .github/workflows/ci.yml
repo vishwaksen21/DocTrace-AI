@@ -46,6 +46,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
       - name: Run pip-audit
         run: |
           pip install pip-audit
@@ -105,9 +106,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install helm-docs
+        run: |
+          curl -LSs https://github.com/norwoodj/helm-docs/releases/download/v1.14.2/helm-docs_1.14.2_Linux_x86_64.tar.gz | tar xz
+          sudo mv helm-docs /usr/local/bin/
       - name: Generate Helm docs
         run: |
-          pip install helm-docs
           helm-docs -c helm/doctrace-ai
 
   deploy-staging:
