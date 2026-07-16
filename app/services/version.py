@@ -234,6 +234,8 @@ class VersionService:
             created_at=datetime.now(tz=UTC),
         )
         saved = await self.version_repo.create(ver)
+        if hasattr(self.version_repo, "session"):
+            await self.version_repo.session.commit()
 
         # Queue parsing job to run in background thread pool/task
         background_tasks.add_task(

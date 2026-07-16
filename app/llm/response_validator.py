@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, field_validator
 
 from app.domain.entities import QATestCase
 
@@ -22,6 +24,16 @@ class LLMQATestCase(BaseModel):
     node_refs: list[str] = Field(
         default_factory=list, description="UUID references to source nodes"
     )
+
+    @field_validator("preconditions", "steps", "node_refs", mode="before")
+    @classmethod
+    def ensure_list(cls, v: Any) -> list[Any]:
+        """Coerce single string values into single-element lists if returned by LLM."""
+        if v is None:
+            return []
+        if isinstance(v, str):
+            return [v.strip()]
+        return v
 
 
 class LLMQAOutput(BaseModel):

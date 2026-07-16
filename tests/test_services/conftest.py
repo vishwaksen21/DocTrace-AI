@@ -19,9 +19,9 @@ from sqlalchemy.pool import StaticPool
 from app.models.base import Base
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 async def service_db_engine() -> AsyncGenerator[AsyncEngine, None]:
-    """Create a module-scoped in-memory SQLite database engine."""
+    """Create a function-scoped in-memory SQLite database engine."""
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         connect_args={"check_same_thread": False},

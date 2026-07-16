@@ -93,6 +93,7 @@ async def generate_qa_cases_task(
             messages=messages,
             temperature=LLM_DEFAULT_TEMPERATURE,
             response_format=LLM_JSON_RESPONSE_FORMAT,
+            max_tokens=2048,
         )
         duration_ms = (datetime.now(tz=UTC) - t0).total_seconds() * 1000.0
 

@@ -130,7 +130,10 @@ class SelectionService:
             created_at=datetime.now(tz=UTC),
             name=name,
         )
-        return await self.selection_repo.create(sel)
+        sel = await self.selection_repo.create(sel)
+        if hasattr(self.selection_repo, "session"):
+            await self.selection_repo.session.commit()
+        return sel
 
     async def delete_selection(self, selection_id: UUID) -> None:
         """Remove a selection and its node junction associations.
@@ -139,3 +142,5 @@ class SelectionService:
             selection_id: UUID of the selection.
         """
         await self.selection_repo.delete(selection_id)
+        if hasattr(self.selection_repo, "session"):
+            await self.selection_repo.session.commit()
