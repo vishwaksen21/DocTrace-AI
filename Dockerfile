@@ -34,8 +34,8 @@ RUN pip install --no-cache-dir -e "."
 
 # Copy application source last (most frequently changing layer)
 COPY --chown=appuser:appuser app/ ./app/
-COPY --chown=appuser:appuser alembic/ ./alembic/ 2>/dev/null || true
-COPY --chown=appuser:appuser alembic.ini . 2>/dev/null || true
+COPY --chown=appuser:appuser alembic/ ./alembic/
+COPY --chown=appuser:appuser alembic.ini .
 
 EXPOSE 8000
 
