@@ -32,7 +32,7 @@ class TestNormaliseContent:
     def test_nfc_normalisation(self) -> None:
         # "é" can be NFD (e + combining accent) or NFC (precomposed é)
         nfd = "\u0065\u0301"  # e + combining acute accent
-        nfc = "\u00e9"        # é precomposed
+        nfc = "\u00e9"  # é precomposed
         assert normalise_content(nfd) == nfc
 
     def test_idempotent(self) -> None:

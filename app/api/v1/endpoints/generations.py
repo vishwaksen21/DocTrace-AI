@@ -16,8 +16,7 @@ router = APIRouter()
     response_model=GenerationResponse,
     summary="Get generation result",
     description=(
-        "Retrieve LLM QA test case generation status and results "
-        "by MongoDB ObjectId hex string."
+        "Retrieve LLM QA test case generation status and results by MongoDB ObjectId hex string."
     ),
 )
 async def get_generation(

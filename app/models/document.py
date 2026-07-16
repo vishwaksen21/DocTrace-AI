@@ -48,6 +48,4 @@ class DocumentModel(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"DocumentModel(id={self.id!r}, title={self.title!r})"
-        )
+        return f"DocumentModel(id={self.id!r}, title={self.title!r})"

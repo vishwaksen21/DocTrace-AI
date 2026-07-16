@@ -52,6 +52,7 @@ async def parse_and_persist_version_task(version_id: UUID, pdf_bytes: bytes) -> 
         try:
             # 1. Run the five-pass PDF parser pipeline
             from app.parser.pdf_parser import parse_pdf
+
             parsed_nodes = await parse_pdf(pdf_bytes)
 
             # 2. Map intermediate ParsedNodes to Node domain entities

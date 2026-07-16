@@ -116,9 +116,7 @@ class TestMongoGenerationRepository:
             assert len(results) == 1
             assert results[0].selection_id == sel_id
 
-            mock_collection.count_documents.assert_awaited_once_with(
-                {"selection_id": str(sel_id)}
-            )
+            mock_collection.count_documents.assert_awaited_once_with({"selection_id": str(sel_id)})
             mock_collection.find.assert_called_once_with({"selection_id": str(sel_id)})
 
     @pytest.mark.anyio

@@ -71,9 +71,7 @@ class SqlAlchemyNodeRepository:
             ``(nodes, total_count)``
         """
         count_stmt = (
-            select(func.count())
-            .select_from(NodeModel)
-            .where(NodeModel.version_id == version_id)
+            select(func.count()).select_from(NodeModel).where(NodeModel.version_id == version_id)
         )
         count_res = await self.session.execute(count_stmt)
         total_count = count_res.scalar() or 0
@@ -196,10 +194,6 @@ class SqlAlchemyNodeRepository:
 
     async def exists(self, node_id: UUID) -> bool:
         """Return ``True`` if a node with the given UUID exists."""
-        stmt = (
-            select(func.count())
-            .select_from(NodeModel)
-            .where(NodeModel.id == node_id)
-        )
+        stmt = select(func.count()).select_from(NodeModel).where(NodeModel.id == node_id)
         res = await self.session.execute(stmt)
         return (res.scalar() or 0) > 0

@@ -27,6 +27,7 @@ class RateLimiter:
         if self.settings.redis_url:
             try:
                 import redis.asyncio as redis
+
                 self._redis = redis.from_url(
                     self.settings.redis_url,
                     encoding="utf-8",
@@ -113,6 +114,7 @@ async def create_redis_client(settings: Settings) -> redis.Redis | None:
 
     try:
         import redis.asyncio as redis
+
         client = redis.from_url(
             settings.redis_url,
             encoding="utf-8",

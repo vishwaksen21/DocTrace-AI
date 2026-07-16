@@ -47,6 +47,7 @@ async def generate_qa_cases_task(
     logger.info("Starting background QA test-case generation", generation_id=generation_id)
 
     from app.repositories.generation import MongoGenerationRepository
+
     generation_repo = MongoGenerationRepository()
 
     # 1. Fetch selection and its nodes in a short-lived SQL session

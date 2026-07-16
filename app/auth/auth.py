@@ -20,7 +20,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class TokenData:
     """Decoded JWT token payload."""
 
-    sub: UUID              # User ID
+    sub: UUID  # User ID
     email: str
     roles: tuple[str, ...] = ()
     exp: datetime | None = None

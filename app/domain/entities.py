@@ -167,9 +167,7 @@ class Node:
                 f"node_type={self.node_type} but heading_level={self.heading_level}."
             )
         if self.heading_level is not None and not (1 <= self.heading_level <= 6):
-            raise ValueError(
-                f"heading_level must be 1-6; got {self.heading_level}."
-            )
+            raise ValueError(f"heading_level must be 1-6; got {self.heading_level}.")
         if len(self.content_hash) != 64:
             raise ValueError(
                 f"content_hash must be a 64-character SHA-256 hex digest; "
@@ -232,8 +230,7 @@ class Selection:
         """Reject empty selections at construction time."""
         if not self.node_ids:
             raise ValueError(
-                "A Selection must contain at least one node.  "
-                "Provide one or more node_ids."
+                "A Selection must contain at least one node.  Provide one or more node_ids."
             )
 
 

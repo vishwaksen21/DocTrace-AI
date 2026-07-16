@@ -22,9 +22,7 @@ from app.repositories import (
 class TestSelectionAPI:
     """API tests for the /selections resource."""
 
-    async def _setup_version_and_nodes(
-        self, session: AsyncSession
-    ) -> tuple[Version, list[Node]]:
+    async def _setup_version_and_nodes(self, session: AsyncSession) -> tuple[Version, list[Node]]:
         doc_repo = SqlAlchemyDocumentRepository(session)
         ver_repo = SqlAlchemyVersionRepository(session)
         node_repo = SqlAlchemyNodeRepository(session)

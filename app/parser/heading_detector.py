@@ -66,9 +66,7 @@ def _body_font_size(blocks: list[RawBlock]) -> float:
     for block in blocks:
         if block.block_type != 0 or not block.text.strip():
             continue
-        size_counts[block.font_size] = size_counts.get(block.font_size, 0) + len(
-            block.text
-        )
+        size_counts[block.font_size] = size_counts.get(block.font_size, 0) + len(block.text)
     if not size_counts:
         return 12.0
     return max(size_counts, key=lambda s: size_counts[s])
@@ -133,8 +131,7 @@ def detect_headings(blocks: list[RawBlock]) -> list[tuple[RawBlock, int | None, 
         {
             b.font_size
             for b in blocks
-            if b.block_type == 0
-            and b.font_size > body_size * _FONT_RATIO_THRESHOLD
+            if b.block_type == 0 and b.font_size > body_size * _FONT_RATIO_THRESHOLD
         },
         reverse=True,
     )

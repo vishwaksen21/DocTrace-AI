@@ -200,7 +200,8 @@ def instrument_sqlalchemy_engine(engine: Any) -> None:
 # ── Lifespan Integration ──────────────────────────────────────────────────────
 
 
-def create_observability_lifespan(settings: Settings
+def create_observability_lifespan(
+    settings: Settings,
 ) -> Callable[[FastAPI], AbstractAsyncContextManager[None]]:
     """Create a lifespan context manager for observability setup/teardown."""
     from app.auth import close_rate_limiter, init_rate_limiter
@@ -217,6 +218,7 @@ def create_observability_lifespan(settings: Settings
         )
 
         from app.core.logging import get_logger
+
         logger = get_logger(__name__)
 
         logger.info(

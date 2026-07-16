@@ -110,9 +110,7 @@ class TestSettingsEnvOverride:
         s = Settings()
         assert s.openrouter_api_key == "sk-or-test-key"
 
-    def test_database_url_override_to_sqlite_memory(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_database_url_override_to_sqlite_memory(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
         s = Settings()
         assert ":memory:" in s.database_url

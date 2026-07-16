@@ -65,6 +65,7 @@ def extract_tables(source: Path | bytes) -> list[RawTable]:
     try:
         if isinstance(source, bytes):
             import io
+
             pdf = pdfplumber.open(io.BytesIO(source))
         else:
             pdf = pdfplumber.open(str(source))

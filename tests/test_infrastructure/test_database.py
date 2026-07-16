@@ -39,6 +39,7 @@ def sqlite_memory_settings(monkeypatch: pytest.MonkeyPatch):
     """Provide Settings pointing to an in-memory SQLite database."""
     monkeypatch.setenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
     from app.core.config import get_settings
+
     get_settings.cache_clear()
     yield get_settings()
     get_settings.cache_clear()
@@ -64,6 +65,7 @@ class TestBuildEngine:
         from sqlalchemy.pool import StaticPool
 
         from app.infrastructure.database import _build_engine
+
         engine = _build_engine("sqlite+aiosqlite:///:memory:", echo=False)
         assert isinstance(engine.pool, StaticPool)
 
@@ -71,6 +73,7 @@ class TestBuildEngine:
         from sqlalchemy.pool import NullPool
 
         from app.infrastructure.database import _build_engine
+
         db_path = tmp_path / "test.db"
         engine = _build_engine(f"sqlite+aiosqlite:///{db_path}", echo=False)
         assert isinstance(engine.pool, NullPool)
@@ -126,9 +129,7 @@ class TestGetSession:
             value = result.scalar()
         assert value == 1
 
-    async def test_session_rolls_back_on_exception(
-        self, sqlite_memory_settings
-    ) -> None:
+    async def test_session_rolls_back_on_exception(self, sqlite_memory_settings) -> None:
         """Exception inside get_session() must trigger rollback, not commit."""
         await init_db(sqlite_memory_settings)
 
@@ -151,9 +152,7 @@ class TestCheckDbHealth:
         result = await check_db_health()
         assert result is False
 
-    async def test_returns_true_when_database_is_reachable(
-        self, sqlite_memory_settings
-    ) -> None:
+    async def test_returns_true_when_database_is_reachable(self, sqlite_memory_settings) -> None:
         await init_db(sqlite_memory_settings)
         result = await check_db_health()
         assert result is True

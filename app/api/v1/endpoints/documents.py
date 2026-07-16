@@ -97,6 +97,7 @@ async def get_document(
     doc = await doc_service.get_document(document_id)
     if doc is None:
         from app.domain.exceptions import DocumentNotFoundError
+
         raise DocumentNotFoundError(document_id)
     return DocumentResponse.model_validate(doc)
 

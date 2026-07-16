@@ -217,14 +217,14 @@ class TestMixedScenario:
         hash_c = _hash("C")
         hash_d = _hash("D")
         hash_ap = _hash("Z")  # A' (modified A)
-        hash_e = _hash("E")   # E (brand new)
+        hash_e = _hash("E")  # E (brand new)
 
         old = [_node(0, hash_a), _node(1, hash_b), _node(2, hash_c), _node(3, hash_d)]
         new = [
             _node(0, hash_ap, version_id=_V2),  # A' modified
-            _node(1, hash_b, version_id=_V2),   # B unchanged
-            _node(2, hash_e, version_id=_V2),   # E — C is at old pos 2, E is new hash
-            _node(4, hash_d, version_id=_V2),   # D moved (distance=1)
+            _node(1, hash_b, version_id=_V2),  # B unchanged
+            _node(2, hash_e, version_id=_V2),  # E — C is at old pos 2, E is new hash
+            _node(4, hash_d, version_id=_V2),  # D moved (distance=1)
         ]
 
         diffs = diff_versions(old, new, tolerance=3)

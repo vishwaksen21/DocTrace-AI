@@ -98,9 +98,7 @@ def _parse_sync(source: Path | bytes, filename: str) -> list[ParsedNode]:
         raise PDFParsingError(filename=filename, reason=str(exc)) from exc
 
     if not raw_blocks:
-        logger.warning(
-            "pdf_parser.no_blocks_extracted", filename=filename
-        )
+        logger.warning("pdf_parser.no_blocks_extracted", filename=filename)
         return []
 
     # ── Pass 2: Heading detection ─────────────────────────────────────────────

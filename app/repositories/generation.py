@@ -99,12 +99,7 @@ class MongoGenerationRepository:
 
         total_count = await collection.count_documents(query)
 
-        cursor = (
-            collection.find(query)
-            .sort("created_at", -1)
-            .skip(offset)
-            .limit(limit)
-        )
+        cursor = collection.find(query).sort("created_at", -1).skip(offset).limit(limit)
         docs = await cursor.to_list(length=limit)
 
         return [_from_mongo_doc(d) for d in docs], total_count
