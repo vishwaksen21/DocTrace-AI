@@ -26,14 +26,14 @@ Limitation:
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 
 import pdfplumber
+import structlog
 
 from app.parser.types import RawTable
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Minimum number of columns to consider a pdfplumber result a "real" table.
 # Single-column "tables" are almost always false positives from aligned text.
@@ -90,7 +90,7 @@ def extract_tables(source: Path | bytes) -> list[RawTable]:
                     )
                     continue
 
-                bbox: tuple[float, float, float, float] = table_obj.bbox  # type: ignore[assignment]
+                bbox: tuple[float, float, float, float] = table_obj.bbox
                 # block_index approximation: use top y-coordinate position
                 block_index = int(bbox[1])
 

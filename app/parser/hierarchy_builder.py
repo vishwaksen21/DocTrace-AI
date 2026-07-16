@@ -40,15 +40,16 @@ List grouping:
 
 from __future__ import annotations
 
-import logging
 from typing import Any
+
+import structlog
 
 from app.domain.enums import NodeType
 from app.parser.content_hasher import compute_hash
 from app.parser.list_detector import DetectedListItem, detect_lists
 from app.parser.types import ParsedNode, RawBlock, RawTable
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def build_hierarchy(
@@ -275,7 +276,7 @@ def _merge_stream(
     for tlist in page_tables.values():
         tlist.sort(key=lambda t: t.bbox[1])
 
-    inserted_tables: set[id] = set()
+    inserted_tables: set[int] = set()
 
     for (block, heading_level, confidence) in heading_results:
         # Skip suppressed blocks (overlap with table)

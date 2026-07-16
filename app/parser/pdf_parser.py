@@ -34,7 +34,6 @@ Error handling:
 from __future__ import annotations
 
 import asyncio
-import logging
 from pathlib import Path
 
 import structlog
@@ -99,7 +98,7 @@ def _parse_sync(source: Path | bytes, filename: str) -> list[ParsedNode]:
         raise PDFParsingError(filename=filename, reason=str(exc)) from exc
 
     if not raw_blocks:
-        logging.getLogger(__name__).warning(
+        logger.warning(
             "pdf_parser.no_blocks_extracted", filename=filename
         )
         return []
@@ -112,7 +111,7 @@ def _parse_sync(source: Path | bytes, filename: str) -> list[ParsedNode]:
         raw_tables: list[RawTable] = extract_tables(source)
     except ValueError as exc:
         # Table extraction failure is non-fatal: log and continue without tables.
-        logging.getLogger(__name__).warning(
+        logger.warning(
             "pdf_parser.table_extraction_failed",
             filename=filename,
             reason=str(exc),
@@ -135,7 +134,7 @@ def _parse_sync(source: Path | bytes, filename: str) -> list[ParsedNode]:
     nodes = assign_paths(nodes_without_paths)
 
     if not nodes:
-        logging.getLogger(__name__).warning(
+        logger.warning(
             "pdf_parser.no_nodes_produced",
             filename=filename,
             raw_block_count=len(raw_blocks),
