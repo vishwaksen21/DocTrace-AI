@@ -191,6 +191,16 @@ class Settings(BaseSettings):
 
     max_upload_size_mb: int = Field(default=50, ge=1, le=500)
 
+    # ── Rate limiting ───────────────────────────────────────────────────────
+
+    rate_limit_enabled: bool = Field(default=True, description="Enable rate limiting")
+    rate_limit_requests: int = Field(
+        default=100, ge=1, le=10000, description="Requests per window"
+    )
+    rate_limit_window_seconds: int = Field(
+        default=60, ge=1, le=3600, description="Rate limit window in seconds"
+    )
+
     # ── Pagination ────────────────────────────────────────────────────────────
 
     default_page_size: int = Field(default=20, ge=1, le=100)
