@@ -254,7 +254,8 @@ def create_observability_lifespan(settings: Settings
         from app.infrastructure.database import _engine
 
         if _engine is not None:
-            instrument_sqlalchemy_engine(_engine)
+            # OpenTelemetry SQLAlchemy instrumentation only supports sync engines
+            instrument_sqlalchemy_engine(_engine.sync_engine)
 
         logger.info("DocTrace AI is ready to serve requests")
 

@@ -51,7 +51,10 @@ class DocumentService:
             created_at=now,
             updated_at=now,
         )
-        return await self.doc_repo.create(doc)
+        doc = await self.doc_repo.create(doc)
+        if hasattr(self.doc_repo, "session"):
+            await self.doc_repo.session.commit()
+        return doc
 
     async def get_document(self, document_id: UUID) -> Document | None:
         """Retrieve a document by ID.
