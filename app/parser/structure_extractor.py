@@ -26,14 +26,14 @@ OCR extensibility:
 from __future__ import annotations
 
 import io
-import logging
 from pathlib import Path
 
 import fitz  # PyMuPDF
+import structlog
 
 from app.parser.types import RawBlock
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # PyMuPDF font flag bit for bold text.
 # See: https://pymupdf.readthedocs.io/en/latest/font.html
@@ -80,7 +80,7 @@ def extract_blocks(source: Path | bytes) -> list[RawBlock]:
             page_dict = page.get_text("dict", flags=fitz.TEXT_PRESERVE_WHITESPACE)
             for block in page_dict.get("blocks", []):
                 block_type: int = block.get("type", 0)
-                bbox: tuple[float, float, float, float] = tuple(block.get("bbox", (0, 0, 0, 0)))  # type: ignore[assignment]
+                bbox: tuple[float, float, float, float] = tuple(block.get("bbox", (0, 0, 0, 0)))
 
                 if block_type == 1:
                     # Image block — no text; OCR can fill this later.

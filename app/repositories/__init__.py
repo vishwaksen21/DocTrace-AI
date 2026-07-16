@@ -2,7 +2,11 @@
 
 Contains:
     interfaces/    Protocol-based contracts each repository must satisfy
-    (M8)           SQLAlchemy implementations will be added in Module 8
+    document.py    SQLAlchemy implementation of DocumentRepository
+    version.py     SQLAlchemy implementation of VersionRepository
+    node.py        SQLAlchemy implementation of NodeRepository
+    selection.py   SQLAlchemy implementation of SelectionRepository
+    generation.py  MongoDB implementation of GenerationRepository
 
 Design rationale
 ----------------
@@ -15,3 +19,19 @@ not on a concrete class.  This makes services testable with simple
 in-memory stubs and allows swapping persistence backends without changing
 any business logic.
 """
+
+from __future__ import annotations
+
+from app.repositories.document import SqlAlchemyDocumentRepository
+from app.repositories.generation import MongoGenerationRepository
+from app.repositories.node import SqlAlchemyNodeRepository
+from app.repositories.selection import SqlAlchemySelectionRepository
+from app.repositories.version import SqlAlchemyVersionRepository
+
+__all__ = [
+    "MongoGenerationRepository",
+    "SqlAlchemyDocumentRepository",
+    "SqlAlchemyNodeRepository",
+    "SqlAlchemySelectionRepository",
+    "SqlAlchemyVersionRepository",
+]
