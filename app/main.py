@@ -133,6 +133,14 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Add rate limiting middleware
+    if settings.rate_limit_enabled:
+        application.add_middleware(
+            RateLimitMiddleware,  # type: ignore[arg-type]
+            requests=settings.rate_limit_requests,
+            window_seconds=settings.rate_limit_window_seconds,
+        )
+
     _register_middleware(application, settings)
     _register_exception_handlers(application)
     _register_routes(application)
@@ -141,6 +149,71 @@ def create_app() -> FastAPI:
 
 
 # ── Middleware ────────────────────────────────────────────────────────────────
+
+
+class RateLimitMiddleware:
+    """Simple in-memory rate limiting middleware.
+
+    Uses a sliding window algorithm with per-IP tracking.
+    For production, consider using Redis-backed rate limiting.
+    """
+
+    def __init__(
+        self,
+        app: FastAPI,
+        requests: int = 100,
+        window_seconds: int = 60,
+    ) -> None:
+        self.app = app
+        self.requests = requests
+        self.window_seconds = window_seconds
+        self._hits: dict[str, list[float]] = {}
+
+    async def __call__(
+        self, scope: dict[str, Any], receive: Any, send: Any
+    ) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        # Get client IP
+        client = scope.get("client")
+        if client:
+            client_ip = client[0]
+        else:
+            client_ip = "unknown"
+
+        # Check rate limit
+        import time
+        now = time.time()
+        window_start = now - self.window_seconds
+
+        # Clean old hits
+        if client_ip in self._hits:
+            self._hits[client_ip] = [ts for ts in self._hits[client_ip] if ts > window_start]
+        else:
+            self._hits[client_ip] = []
+
+        # Check if limit exceeded
+        if len(self._hits[client_ip]) >= self.requests:
+            # Rate limited
+            response = JSONResponse(
+                status_code=429,
+                content={
+                    "error": "RateLimitExceeded",
+                    "message": (
+                        f"Rate limit exceeded. Maximum {self.requests} requests "
+                        f"per {self.window_seconds} seconds."
+                    ),
+                },
+            )
+            await response(scope, receive, send)
+            return
+
+        # Record hit
+        self._hits[client_ip].append(now)
+
+        await self.app(scope, receive, send)
 
 
 def _register_middleware(app: FastAPI, settings: Settings) -> None:
@@ -192,6 +265,9 @@ def _register_exception_handlers(app: FastAPI) -> None:
     The catch-all handler prevents raw Python tracebacks from reaching
     API consumers.  Domain-specific handlers are added in M11.
     """
+    from app.api.errors import register_error_handlers
+
+    register_error_handlers(app)
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(
@@ -277,13 +353,10 @@ def _register_routes(app: FastAPI) -> None:
         }
 
     # ── V1 API routers (registered in M11) ───────────────────────────────────
-    # from app.core.constants import API_V1_PREFIX
-    # from app.api.v1 import documents, versions, nodes, selections, generations
-    # app.include_router(documents.router, prefix=API_V1_PREFIX)
-    # app.include_router(versions.router, prefix=API_V1_PREFIX)
-    # app.include_router(nodes.router, prefix=API_V1_PREFIX)
-    # app.include_router(selections.router, prefix=API_V1_PREFIX)
-    # app.include_router(generations.router, prefix=API_V1_PREFIX)
+    from app.api.v1 import api_router
+    from app.core.constants import API_V1_PREFIX
+
+    app.include_router(api_router, prefix=API_V1_PREFIX)
 
 
 # ── Module-level app instance ─────────────────────────────────────────────────
